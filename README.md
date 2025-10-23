@@ -93,4 +93,5 @@ https://github.com//ICS-Quadratic-Grader-SIYINGWA-CHABOTA
 **Name:** Siyingwa Chabota  
 **Course:** ICS  
 **StudentNumber:** 202407073
+**Program:** Information Technology
 **Project:** Quadratic Solver & Grading System
