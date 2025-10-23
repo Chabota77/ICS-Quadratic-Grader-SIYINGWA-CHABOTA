@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ICS Quadratic + Grader</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+body {
+font-family: 'Poppins', sans-serif;
+text-align: center;
+background: linear-gradient(120deg, #74ebd5, #ACB6E5);
+color: #222;
+margin: 0;
+padding: 0;
+}
+h1 {
+margin-top: 30px;
+color: #fff;
+text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+.subtitle {
+color: #f1f1f1;
+margin-bottom: 30px;
+}
+.container {
+background-color: white;
+width: 90%;
+max-width: 400px;
+margin: 20px auto;
+border-radius: 15px;
+padding: 20px;
+box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+label {
+display: block;
+margin: 10px 0;
+}
+input {
+width: 60%;
+padding: 8px;
+border: 2px solid #74ebd5;
+border-radius: 10px;
+outline: none;
+transition: all 0.3s;
+}
+input:focus {
+border-color: #4d69ff;
+box-shadow: 0 0 5px #4d69ff;
+}
+button {
+background: #4d69ff;
+color: white;
+border: none;
+padding: 10px 18px;
+margin: 10px;
+border-radius: 10px;
+cursor: pointer;
+transition: all 0.3s ease;
+font-size: 14px;
+}
+button:hover {
+background: #3741b6;
+transform: scale(1.05);
+}
+#quadResult, #gradeResult {
+margin-top: 15px;
+font-weight: bold;
+color: #333;
+}
+</style>
+</head>
+<body>
+<main>
+<h1>Quadratic Solver & Score Grader</h1>
+<p>Enter values and click the Compute buttons. Use Reset to clear each form.</p>
+<section id="quadratic">
+<h2>Quadratic Solver (ax² + bx + c = 0)</h2>
+<label>A: <input id="a" type="text" /></label>
+<span class="err" id="a-err"></span><br>
+<label>B: <input id="b" type="text" /></label>
+<span class="err" id="b-err"></span><br>
+<label>C: <input id="c" type="text" /></label>
+<span class="err" id="c-err"></span><br>
+<button id="solve-btn">Compute</button>
+<button id="quad-reset">Reset</button>
+<div class="result" id="quad-result" aria-live="polite"></div>
+</section>
+<hr>
+<section id="grader">
+<h2>Score → Letter Grade</h2>
+<label>Score (0–100): <input id="score" type="text" /></label>
+<span class="err" id="score-err"></span><br>
+<button id="grade-btn">Get Grade</button>
+<button id="grade-reset">Reset</button>
+<div class="result" id="grade-result" aria-live="polite"></div>
+</section>
+</main>
+<script>
+function isNumber(value) {
+if (value === null || value === undefined) return false;
+value = value.toString().trim();
+if (value === "") return false;
+return !Number.isNaN(Number(value));
+}
+function toNum(v) { return Number(v.toString().trim()); }
+function fmt(n) {
+if (!isFinite(n)) return String(n);
+if (Math.abs(n - Math.round(n)) < 1e-10) return String(Math.round(n));
+return Number(n.toFixed(4)).toString();
+}
+function solveQuadratic(a,b,c) {
+const D = b*b - 4*a*c;
+let nature, roots;
+if (D > 0) {
+nature = "Two distinct real roots";
+const r1 = (-b + Math.sqrt(D)) / (2*a);
+const r2 = (-b - Math.sqrt(D)) / (2*a);
+roots = `x₁ = ${fmt(r1)}\nx₂ = ${fmt(r2)}`;
+} else if (Math.abs(D) < 1e-12) {
+nature = "One repeated real root";
+const r = -b / (2*a);
+roots = `x = ${fmt(r)}`;
+} else {
+nature = "Two complex conjugate roots";
+const real = -b / (2*a);
+const imag = Math.sqrt(-D) / (2*a);
+roots = `x₁ = ${fmt(real)} + ${fmt(imag)}i\nx₂ = ${fmt(real)} -
+${fmt(imag)}i`;
+}
+return { D, nature, roots };
+}
+function convertScoreToGrade(score) {
+const s = Math.floor(score);
+if (s >= 85 && s <= 100) return "A+";
+if (s >= 75 && s <= 84) return "A";
+if (s >= 65 && s <= 74) return "B+";
+if (s >= 60 && s <= 64) return "B";
+if (s >= 55 && s <= 59) return "C+";
+if (s >= 50 && s <= 54) return "C";
+return "D";
+}
+document.addEventListener("DOMContentLoaded", () => {
+const aEl = document.getElementById("a"), bEl = document.getElementById("b"),
+cEl = document.getElementById("c");
+const solveBtn = document.getElementById("solve-btn"), quadReset =
+document.getElementById("quad-reset");
+const qResult = document.getElementById("quad-result");
+const aErr = document.getElementById("a-err"), bErr =
+document.getElementById("b-err"), cErr = document.getElementById("c-err");
+solveBtn.addEventListener("click", () => {
+aErr.textContent = bErr.textContent = cErr.textContent = "";
+qResult.textContent = "";
+const aV = aEl.value, bV = bEl.value, cV = cEl.value;
+let ok = true;
+if (!isNumber(aV)) { aErr.textContent = "Enter a valid number for a"; ok =
+false; }
+if (!isNumber(bV)) { bErr.textContent = "Enter a valid number for b"; ok =
+false; }
+if (!isNumber(cV)) { cErr.textContent = "Enter a valid number for c"; ok =
+false; }
+if (!ok) return;
+const a = toNum(aV), b = toNum(bV), c = toNum(cV);
+if (Math.abs(a) < 1e-12) { aErr.textContent = "a must not be 0"; return; }
+const out = solveQuadratic(a,b,c);
+qResult.textContent = `Discriminant D =
+${fmt(out.D)}\n${out.nature}\n${out.roots}`;
+});
+quadReset.addEventListener("click", () => {
+aEl.value=bEl.value=cEl.value="";
+aErr.textContent=bErr.textContent=cErr.textContent="";
+qResult.textContent="";
+});
+const scoreEl = document.getElementById("score"), gradeBtn =
+document.getElementById("grade-btn");
+const gradeReset = document.getElementById("grade-reset"), scoreErr =
+document.getElementById("score-err");
+const gradeResult = document.getElementById("grade-result");
+gradeBtn.addEventListener("click", () => {
+scoreErr.textContent = "";
+gradeResult.textContent = "";
+const sV = scoreEl.value;
+if (!isNumber(sV)) { scoreErr.textContent = "Enter a number between 0 and100"; return; }
+const s = toNum(sV);
+if (!Number.isFinite(s) || s < 0 || s > 100) { scoreErr.textContent = "Scoremust be in range 0–100"; return; }
+const grade = convertScoreToGrade(s);
+gradeResult.textContent = `Score ${Math.floor(s)} → Grade ${grade}`;});
+gradeReset.addEventListener("click", () => {
+scoreEl.value = "";
+scoreErr.textContent = "";
+gradeResult.textContent = "";
+});
+});
+</script>
+</body>
+</html>
